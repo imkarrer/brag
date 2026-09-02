@@ -11,7 +11,9 @@ reads top-down: glance → theme narratives → in-place evidence, all via
 `<details>`, no appendix.
 
 1. Window from the arguments (`/report 2026-01-01 2026-06-30`); if absent,
-   ask. Audience defaults to manager.
+   ask. Audience defaults to manager. (`brag report --from --to` renders a
+   mechanical tag-grouped page with no themes or narrative — this skill
+   exists to do better than that, so don't reach for it here.)
 2. Read the window: `brag read --from <from> --to <to>`. Fewer than ~5
    entries: tell the user the window looks thin and confirm before
    generating.

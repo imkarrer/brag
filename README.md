@@ -96,6 +96,25 @@ Harvesting needs `gh` authenticated, and a `LINEAR_API_KEY` in the
 environment for Linear. When the key is absent, Linear is skipped with a
 note.
 
+## Without an agent
+
+Every workflow also works with nothing but the CLI:
+
+```bash
+brag toot "Unblocked the demo" --impact "Demo shipped on time."
+brag candidates --since 2026-08-01 > candidates.jsonl   # deduped drafts from GitHub + Linear
+$EDITOR candidates.jsonl                                # fill in impact, delete the churn
+brag append < candidates.jsonl
+brag watermark set github "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+brag report --from 2026-01-01 --to 2026-06-30           # tag-grouped HTML page
+```
+
+`brag append` rejects any entry with an empty `impact`, so nothing enters
+the ledger without a "so what" — that rule holds whether a human or an
+agent wrote it. What the agent skills add on top: drafted impact lines,
+churn filtering, and a themed narrative report instead of a tag-grouped
+one.
+
 ## The ledger
 
 One JSON object per line in `entries.jsonl`; `brag schema` prints the

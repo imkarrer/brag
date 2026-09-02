@@ -11,11 +11,11 @@ employment start) to the current github/linear watermarks, or today if none.
 Expect volume; work month by month so the run is resumable.
 
 1. Start date from the arguments; if absent, ask.
-2. For each month from start date to now, harvest GitHub and Linear per
-   `.claude/skills/harvesting.md` and append that month via `brag append`
-   before moving on. A month already fully in the ledger (every candidate id
-   skipped) costs one append call — resuming an interrupted backfill is just
-   running /backfill again.
+2. For each month from start date to now, run
+   `brag candidates --since <month-start> --until <month-end>` and curate
+   per `.claude/skills/harvesting.md`, appending that month before moving
+   on. Already-captured ids never reappear as candidates — resuming an
+   interrupted backfill is just running /backfill again.
 3. This run is interactive: show each month's additions, and put borderline
    calls in front of the user instead of deciding silently.
 4. After the last month, set both watermarks to now (`brag watermark set`),

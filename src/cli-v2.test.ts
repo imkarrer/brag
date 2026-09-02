@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -83,6 +83,59 @@ describe("brag init", () => {
     run(["init"], env);
     run(["append"], env, entry("t:1"));
     expect(existsSync(join(dataDir, ".git"))).toBe(false);
+  });
+});
+
+describe("brag toot", () => {
+  it("records a toot from flags and rejects a missing impact when not a TTY", () => {
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const env = { BRAG_HOME: dataDir };
+    run(["init"], env);
+
+    const out = JSON.parse(
+      run(
+        [
+          "toot",
+          "Unblocked the demo",
+          "--impact",
+          "Demo shipped on time.",
+          "--tags",
+          "demo",
+        ],
+        env
+      )
+    );
+    expect(out.kind).toBe("toot");
+    expect(out.tags).toEqual(["demo"]);
+    expect(JSON.parse(run(["read"], env).trim()).id).toBe(out.id);
+
+    expect(() => run(["toot", "No impact given"], env)).toThrow(/impact/);
+  });
+});
+
+describe("brag report", () => {
+  it("renders the window to an html file and prints its path", () => {
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const env = { BRAG_HOME: dataDir };
+    run(["init"], env);
+    run(
+      [
+        "toot",
+        "Shipped the pipeline",
+        "--impact",
+        "Cut release time in half.",
+        "--date",
+        "2026-05-01",
+      ],
+      env
+    );
+
+    const outPath = run(
+      ["report", "--from", "2026-01-01", "--to", "2026-06-30"],
+      env
+    ).trim();
+    expect(outPath).toContain("2026-01-01--2026-06-30.html");
+    expect(readFileSync(outPath, "utf8")).toContain("Shipped the pipeline");
   });
 });
 
