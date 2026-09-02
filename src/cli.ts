@@ -348,6 +348,9 @@ function report(): void {
     outPath,
     renderReport(entries, { from: values.from, to: values.to })
   );
+  console.error(
+    "tag-grouped render. For a themed, narrative report, run /report in Claude Code from your data dir."
+  );
   console.log(outPath);
 }
 

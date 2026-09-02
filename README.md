@@ -96,9 +96,9 @@ Harvesting needs `gh` authenticated, and a `LINEAR_API_KEY` in the
 environment for Linear. When the key is absent, Linear is skipped with a
 note.
 
-## Without an agent
+## Skill or plain CLI?
 
-Every workflow also works with nothing but the CLI:
+Every workflow works with nothing but the CLI:
 
 ```bash
 brag toot "Unblocked the demo" --impact "Demo shipped on time."
@@ -110,10 +110,33 @@ brag report --from 2026-01-01 --to 2026-06-30           # tag-grouped HTML page
 ```
 
 `brag append` rejects any entry with an empty `impact`, so nothing enters
-the ledger without a "so what" — that rule holds whether a human or an
-agent wrote it. What the agent skills add on top: drafted impact lines,
-churn filtering, and a themed narrative report instead of a tag-grouped
-one.
+the ledger without a "so what". That rule holds whether a human or an agent
+wrote it.
+
+The skills exist because some of these steps are judgment, and judgment is
+where an agent earns its keep:
+
+| Task    | Plain CLI                                                                    | With the skill                                                                                                                            |
+| ------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Capture | `brag toot` with flags; you write the impact line                            | `/toot` drafts the impact from what you said, classifies pasted praise as kudos, infers the date                                          |
+| Harvest | `brag candidates` emits every PR and issue; you fill every impact, cut churn | `/harvest` filters churn into rollups, drafts each impact from the PR body, and flags borderline calls instead of deciding silently       |
+| Report  | `brag report` renders a tag-grouped changelog                                | `/report` finds the 3–6 themes, writes the narrative arc for each, and builds the glance → story → evidence page a manager actually reads |
+
+Where it matters most is the report. A tag-grouped list is a changelog; a
+review packet is a story. `/report` reads a half-year of impact lines,
+finds the arcs ("hardened the publish pipeline", "cut onboarding time"),
+and writes prose you could paste into a self-review, with every claim
+expandable to its evidence. That difference is the reason this tool is
+AI-centric rather than AI-flavored.
+
+Harvest is a close second: over a backfill of hundreds of candidates,
+"filter the churn and draft every impact line" is hours by hand and minutes
+with the skill, and the impact lines it drafts from PR bodies are the raw
+material every future report is built from.
+
+Capture is the one place the CLI is often the better tool: when you already
+know the sentence you want to record, `brag toot` is faster than any
+conversation.
 
 ## The ledger
 
