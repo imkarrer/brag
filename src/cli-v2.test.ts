@@ -139,6 +139,20 @@ describe("brag report", () => {
   });
 });
 
+describe("brag --help", () => {
+  it("prints usage instead of a stack trace, for --help and for unknown flags", () => {
+    expect(run(["--help"])).toContain("usage:");
+    let err = "";
+    try {
+      run(["read", "--bogus"]);
+    } catch (e) {
+      err = String((e as { stderr: string }).stderr);
+    }
+    expect(err).toContain("usage:");
+    expect(err).not.toContain("at checkOptionUsage");
+  });
+});
+
 describe("brag schema", () => {
   it("prints the entry fields and enums", () => {
     const out = run(["schema"]);

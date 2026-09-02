@@ -46,28 +46,46 @@ const USAGE = `usage:
 
 data dir resolution: --data-dir flag > $BRAG_HOME > ~/.config/brag/config.json > default`;
 
-const { values, positionals } = parseArgs({
-  allowPositionals: true,
-  options: {
-    "data-dir": { type: "string" },
-    git: { type: "boolean", default: false },
-    ledger: { type: "string" },
-    state: { type: "string" },
-    from: { type: "string" },
-    to: { type: "string" },
-    kudos: { type: "boolean", default: false },
-    impact: { type: "string" },
-    summary: { type: "string" },
-    date: { type: "string" },
-    tags: { type: "string" },
-    links: { type: "string" },
-    source: { type: "string", default: "all" },
-    owner: { type: "string", multiple: true },
-    since: { type: "string" },
-    until: { type: "string" },
-    out: { type: "string" },
-  },
-});
+function parseCliArgs(): ReturnType<typeof doParseArgs> {
+  try {
+    return doParseArgs();
+  } catch (e) {
+    console.error(`${(e as Error).message}\n\n${USAGE}`);
+    process.exit(2);
+  }
+}
+
+const doParseArgs = () =>
+  parseArgs({
+    allowPositionals: true,
+    options: {
+      help: { type: "boolean", default: false },
+      "data-dir": { type: "string" },
+      git: { type: "boolean", default: false },
+      ledger: { type: "string" },
+      state: { type: "string" },
+      from: { type: "string" },
+      to: { type: "string" },
+      kudos: { type: "boolean", default: false },
+      impact: { type: "string" },
+      summary: { type: "string" },
+      date: { type: "string" },
+      tags: { type: "string" },
+      links: { type: "string" },
+      source: { type: "string", default: "all" },
+      owner: { type: "string", multiple: true },
+      since: { type: "string" },
+      until: { type: "string" },
+      out: { type: "string" },
+    },
+  });
+
+const { values, positionals } = parseCliArgs();
+
+if (values.help) {
+  console.log(USAGE);
+  process.exit(0);
+}
 
 const dataDir = resolveDataDir({ flag: values["data-dir"] });
 const ledgerPath = values.ledger ?? join(dataDir, "entries.jsonl");
