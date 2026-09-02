@@ -24,6 +24,13 @@ import {
 } from "./candidates.ts";
 import { configPath, resolveDataDir } from "./config.ts";
 import { renderReport } from "./report.ts";
+import {
+  CRON_MARKER,
+  LAUNCHD_LABEL,
+  renderCronLine,
+  renderLaunchdPlist,
+  updateCrontab,
+} from "./schedule.ts";
 import { buildTootEntry } from "./toot.ts";
 import {
   appendEntries,
@@ -44,6 +51,8 @@ const USAGE = `usage:
   brag append [--data-dir <path>]                 # entries as JSON array or JSONL on stdin
   brag read [--data-dir <path>] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
   brag report --from YYYY-MM-DD --to YYYY-MM-DD [--out <file.html>]
+  brag schedule [install|remove|status] [--weekday 0-6] [--hour 0-23]
+                                                  # weekly harvest via launchd (macOS) or cron (Linux)
   brag watermark get <source> [--data-dir <path>]
   brag watermark set <source> <timestamp> [--data-dir <path>]
   brag paths                                      # print resolved data locations
@@ -82,6 +91,8 @@ const doParseArgs = () =>
       since: { type: "string" },
       until: { type: "string" },
       out: { type: "string" },
+      weekday: { type: "string" },
+      hour: { type: "string" },
     },
   });
 
@@ -415,6 +426,144 @@ function report(): void {
   console.log(outPath);
 }
 
+function which(cmd: string): string | null {
+  try {
+    return execFileSync("which", [cmd], {
+      encoding: "utf8",
+      stdio: "pipe",
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function schedule(action: string): void {
+  const platform = process.env["BRAG_PLATFORM"] ?? process.platform;
+  const weekday = Number(values.weekday ?? "1");
+  const hour = Number(values.hour ?? "9");
+  if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) {
+    console.error("--weekday must be 0-6 (0 = Sunday)");
+    process.exit(2);
+  }
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    console.error("--hour must be 0-23");
+    process.exit(2);
+  }
+
+  const manual = `cd ${dataDir} && claude -p /harvest`;
+  if (platform !== "darwin" && platform !== "linux") {
+    console.error(
+      `brag schedule supports macOS (launchd) and Linux (cron); this is ${platform}.\n` +
+        `Schedule this weekly with your platform's scheduler instead:\n  ${manual}`
+    );
+    process.exit(2);
+  }
+
+  const claudePath = which("claude");
+  if (action !== "remove" && action !== "status" && !claudePath) {
+    console.error(
+      "claude not found on PATH — the harvest job runs `claude -p /harvest`.\n" +
+        "Install Claude Code first, then re-run brag schedule."
+    );
+    process.exit(2);
+  }
+  const job = {
+    dataDir,
+    claudePath: claudePath ?? "claude",
+    path: process.env["PATH"] ?? "/usr/bin:/bin",
+  };
+  const when = { weekday, hour };
+
+  if (platform === "darwin") {
+    const plistPath = join(
+      homedir(),
+      "Library",
+      "LaunchAgents",
+      `${LAUNCHD_LABEL}.plist`
+    );
+    const uid = process.getuid?.() ?? 501;
+    const launchctl = (args: string[]): boolean => {
+      try {
+        execFileSync("launchctl", args, { stdio: "pipe" });
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    if (action === "status") {
+      console.log(
+        existsSync(plistPath) ? `installed: ${plistPath}` : "not installed"
+      );
+      return;
+    }
+    if (action === "remove") {
+      launchctl(["bootout", `gui/${uid}/${LAUNCHD_LABEL}`]);
+      if (existsSync(plistPath)) {
+        rmSync(plistPath);
+        console.log("removed launchd job");
+      } else {
+        console.log("no launchd job installed");
+      }
+      return;
+    }
+    const logPath = join(homedir(), "Library", "Logs", "brag-harvest.log");
+    mkdirSync(dirname(plistPath), { recursive: true });
+    mkdirSync(dirname(logPath), { recursive: true });
+    launchctl(["bootout", `gui/${uid}/${LAUNCHD_LABEL}`]); // replace any old job
+    writeFileSync(plistPath, renderLaunchdPlist(job, when, logPath));
+    if (
+      !launchctl(["bootstrap", `gui/${uid}`, plistPath]) &&
+      !launchctl(["load", "-w", plistPath])
+    ) {
+      console.error(
+        `wrote ${plistPath} but launchctl refused to load it — run:\n  launchctl bootstrap gui/${uid} ${plistPath}`
+      );
+      process.exit(1);
+    }
+    console.log(
+      `weekly harvest scheduled (launchd): weekday ${weekday}, ${hour}:00\n` +
+        `plist: ${plistPath}\nlog:   ${logPath}\n` +
+        "launchd runs missed jobs on wake. Re-run brag schedule after moving the data dir or reinstalling claude."
+    );
+    return;
+  }
+
+  // linux
+  if (!which("crontab")) {
+    console.error(
+      "crontab not found — install cron, or add a systemd user timer running:\n  " +
+        manual
+    );
+    process.exit(2);
+  }
+  let existing = "";
+  try {
+    existing = execFileSync("crontab", ["-l"], {
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+  } catch {
+    existing = ""; // no crontab yet
+  }
+  if (action === "status") {
+    console.log(
+      existing.includes(CRON_MARKER) ? "installed (crontab)" : "not installed"
+    );
+    return;
+  }
+  const newTab = updateCrontab(
+    existing,
+    action === "remove" ? null : renderCronLine(job, when)
+  );
+  execFileSync("crontab", ["-"], { input: newTab });
+  console.log(
+    action === "remove"
+      ? "removed cron job"
+      : `weekly harvest scheduled (cron): weekday ${weekday}, ${hour}:00\n` +
+          "Note: cron skips jobs if the machine is asleep at fire time."
+  );
+}
+
 const [command, ...rest] = positionals;
 
 switch (command) {
@@ -429,6 +578,9 @@ switch (command) {
     break;
   case "report":
     report();
+    break;
+  case "schedule":
+    schedule(rest[0] ?? "install");
     break;
   case "append": {
     const result = appendEntries(ledgerPath, parseStdin());

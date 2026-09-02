@@ -22,7 +22,7 @@
         "runtime-packages": [
           "nodejs"
         ],
-        "version": "0.5.0",
+        "version": "0.6.0",
         "description": "AI-centric accomplishment ledger for performance reviews"
       }
     }

@@ -211,6 +211,32 @@ describe("brag report", () => {
   });
 });
 
+describe("brag schedule", () => {
+  it("fails elegantly on unsupported platforms", () => {
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    let err = "";
+    try {
+      run(["schedule"], { BRAG_HOME: dataDir, BRAG_PLATFORM: "win32" });
+    } catch (e) {
+      err = String((e as { stderr: string }).stderr);
+    }
+    expect(err).toContain("win32");
+    expect(err).toContain("claude -p");
+    expect(err).not.toContain("at ");
+  });
+
+  it("rejects an invalid weekday or hour with a clear message", () => {
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    let err = "";
+    try {
+      run(["schedule", "--hour", "25"], { BRAG_HOME: dataDir });
+    } catch (e) {
+      err = String((e as { stderr: string }).stderr);
+    }
+    expect(err).toContain("hour");
+  });
+});
+
 describe("brag --help", () => {
   it("prints usage instead of a stack trace, for --help and for unknown flags", () => {
     expect(run(["--help"])).toContain("usage:");

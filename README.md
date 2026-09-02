@@ -86,10 +86,9 @@ Then, inside Claude Code:
 - `/backfill 2025-04-01` is the one-time bootstrap from your start date. It
   ends with a sweep for wins that left no digital trail.
 - `/harvest` pulls merged PRs, reviews, and completed Linear issues since
-  the last run. Automate it weekly with
-  `0 9 * * 1 cd <data-dir> && claude -p "/harvest"`, or a launchd job on
-  macOS, which fires on wake instead of skipping laptops that were asleep at
-  cron time.
+  the last run. `brag schedule` makes it weekly: launchd on macOS (fires on
+  wake instead of skipping laptops that were asleep), crontab on Linux, and
+  a plain refusal with the manual command anywhere else.
 - `/report 2026-01-01 2026-06-30` generates the report for a window.
 - `/share-report` publishes a report as a private Claude artifact and hands
   you the link; you pick exactly who to share it with. (GitHub Pages was
