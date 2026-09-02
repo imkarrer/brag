@@ -25,10 +25,12 @@ dirs with a GitHub remote.
      expect enabling to fail there.
    - Reports quote kudos with colleagues' names. Publishing shares those
      words on the open web.
-     Ask for explicit confirmation, and offer the private alternative: the
-     report HTML is self-contained, so sending the file itself (email, Slack,
-     a claude.ai artifact) shares it without a public URL. Proceed only on a
-     clear yes.
+
+   Ask for explicit confirmation, and offer the private alternative: the
+   report HTML is self-contained, so sending the file itself (email, Slack,
+   a claude.ai artifact) shares it without a public URL. Proceed only on a
+   clear yes.
+
 4. Publish the site content:
    - copy the chosen report(s) into `docs/`;
    - write `docs/index.html` linking every published report (window as link
@@ -47,10 +49,10 @@ dirs with a GitHub remote.
    ledger public is almost never right; recommend the send-the-file route
    instead.
 
-6. Give the user the link: `gh api repos/{owner}/{repo}/pages --jq
-.html_url` plus the report filename. Note the first build can take a
-   minute, and that unpublishing is deleting the file from `docs/` and
-   pushing.
+6. Give the user the link: `html_url` from
+   `gh api repos/{owner}/{repo}/pages`, plus the report filename. Note the
+   first build can take a minute, and that unpublishing is deleting the
+   file from `docs/` and pushing.
 
 Done when the user has the report URL (or declined at the visibility gate
 and, if they wanted sharing, got the file-sending alternative).
