@@ -76,7 +76,7 @@ gh.pkg-path = "gh"
 ## ------------------------------------------------------------------
 [build.brag]
 description = "AI-centric accomplishment ledger for performance reviews"
-version = "0.2.0"
+version = "0.3.0"
 runtime-packages = ["nodejs"]
 command = '''
   mkdir -p $out/bin $out/lib/brag

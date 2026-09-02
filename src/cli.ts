@@ -153,7 +153,9 @@ function init(): void {
       ? "git-backed: every append and watermark update auto-commits."
       : "plain files (re-run with --git, or `git init` there yourself, to get auto-commits)."
   );
-  console.log("Claude Code skills installed: /toot /harvest /backfill /report");
+  console.log(
+    "Claude Code skills installed: /toot /harvest /backfill /report /publish-report"
+  );
 }
 
 async function promptFor(field: string): Promise<string> {
