@@ -14,7 +14,14 @@ const run = (
   execFileSync("node", ["--no-warnings", CLI, ...args], {
     input,
     encoding: "utf8",
-    env: { ...process.env, ...env },
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: "brag-test",
+      GIT_AUTHOR_EMAIL: "brag-test@example.invalid",
+      GIT_COMMITTER_NAME: "brag-test",
+      GIT_COMMITTER_EMAIL: "brag-test@example.invalid",
+      ...env,
+    },
   });
 
 const entry = (id: string) =>
