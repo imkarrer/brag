@@ -27,11 +27,44 @@ auto-commits), or plain files if you don't.
 
 ## Install
 
+### Already on Flox
+
 ```bash
-flox install imkarrer/brag        # into your default flox environment
-# or try it without installing:
-flox activate -r imkarrer/brag -- brag --help
+flox install imkarrer/brag
 ```
+
+Run outside an activated project environment, this installs `brag` into your
+[**default environment**](https://flox.dev/docs/tutorials/default-environment)
+— the flox environment that travels with your shell rather than with any one
+project, so `brag` is on your PATH everywhere. (Inside an activated project
+environment, the same command installs it there instead.)
+
+### New to Flox?
+
+[Flox](https://flox.dev) gives you reproducible developer environments built
+on Nix — same packages on macOS and Linux, per-project or shell-wide, no
+containers. It's also how this project is built, tested, and distributed.
+
+1. Install Flox from [flox.dev/download](https://flox.dev/download) (macOS:
+   `brew install flox`).
+2. `flox install imkarrer/brag` — your first install creates your default
+   environment; the [default environment tutorial](https://flox.dev/docs/tutorials/default-environment)
+   explains how it hooks into your shell.
+3. Want to see how far the flox-for-daily-CLI-life idea goes?
+   [imkarrer/flox-workstation-template](https://github.com/imkarrer/flox-workstation-template)
+   is a worked example: flox for everyday tools, nix-darwin underneath.
+
+### Without Flox
+
+`brag` is plain TypeScript run natively by Node.js ≥ 23.6 (type stripping) —
+no build step:
+
+```bash
+git clone https://github.com/imkarrer/brag && cd brag
+node --no-warnings src/cli.ts --help    # alias it: alias brag='node --no-warnings /path/to/brag/src/cli.ts'
+```
+
+You bring your own `node`, `gh`, and `jq`; the flox path brings them for you.
 
 ## Quickstart
 
