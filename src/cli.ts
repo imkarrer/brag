@@ -175,7 +175,7 @@ function init(): void {
       : "plain files (re-run with --git, or `git init` there yourself, to get auto-commits)."
   );
   console.log(
-    "Claude Code skills installed: /toot /harvest /backfill /report /publish-report"
+    "Claude Code skills installed: /toot /harvest /backfill /report /share-report"
   );
 }
 

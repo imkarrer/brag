@@ -91,10 +91,12 @@ Then, inside Claude Code:
   macOS, which fires on wake instead of skipping laptops that were asleep at
   cron time.
 - `/report 2026-01-01 2026-06-30` generates the report for a window.
-- `/publish-report` puts a report on GitHub Pages so reviewers get a link
-  (git-backed data dirs with a GitHub remote only — and note Pages sites
-  are readable by anyone with the URL, so the skill asks before it ships;
-  the private alternative is sending the self-contained HTML file).
+- `/share-report` publishes a report as a private Claude artifact and hands
+  you the link; you pick exactly who to share it with. (GitHub Pages was
+  deliberately rejected here: Pages sites are readable by anyone with the
+  URL on every plan except Enterprise Cloud, which is the wrong default
+  for a document quoting colleagues by name. The offline alternative is
+  sending the self-contained HTML file.)
 
 Harvesting needs `gh` authenticated, and a `LINEAR_API_KEY` in the
 environment for Linear. When the key is absent, Linear is skipped with a
