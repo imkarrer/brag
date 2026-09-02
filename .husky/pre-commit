@@ -1,0 +1,3 @@
+flox activate -- npx lint-staged
+flox activate -- npm run typecheck
+flox activate -- npm run test
