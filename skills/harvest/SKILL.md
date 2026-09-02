@@ -13,7 +13,7 @@ a question; when unsure, include the entry and flag it.
 1. Watermarks: `brag watermark get <source>` for `github` and `linear`.
    `null` means never harvested — use 30 days ago and say so. Record the
    run's start time now; it becomes the new watermark.
-2. Harvest both sources per `.claude/skills/harvesting.md`: queries,
+2. Harvest both sources per `.agents/skills/harvesting.md`: queries,
    significance filter, entry drafting, rollups.
 3. Append via `brag append` (it dedupes, validates, and auto-commits in
    git-backed data dirs), then set each successfully harvested source's

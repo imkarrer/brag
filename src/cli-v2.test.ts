@@ -1,5 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -47,7 +54,7 @@ describe("brag init", () => {
 
     run(["init"], env);
     expect(
-      existsSync(join(dataDir, ".claude", "skills", "toot", "SKILL.md"))
+      existsSync(join(dataDir, ".agents", "skills", "toot", "SKILL.md"))
     ).toBe(true);
 
     const result = JSON.parse(run(["append"], env, entry("t:1")));
@@ -86,6 +93,54 @@ describe("brag init", () => {
   });
 });
 
+describe("brag init harness detection", () => {
+  it("symlinks .claude/skills to .agents/skills when Claude Code is detected", () => {
+    const home = mkdtempSync(join(tmpdir(), "home-"));
+    mkdirSync(join(home, ".claude"), { recursive: true });
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const env = { BRAG_HOME: dataDir, HOME: home };
+
+    run(["init"], env);
+    const link = join(dataDir, ".claude", "skills");
+    expect(lstatSync(link).isSymbolicLink()).toBe(true);
+    expect(existsSync(join(link, "toot", "SKILL.md"))).toBe(true);
+  });
+
+  it("creates no .claude dir when no harness is detected", () => {
+    const home = mkdtempSync(join(tmpdir(), "home-"));
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    run(["init"], { BRAG_HOME: dataDir, HOME: home });
+    expect(existsSync(join(dataDir, ".claude"))).toBe(false);
+    expect(
+      existsSync(join(dataDir, ".agents", "skills", "toot", "SKILL.md"))
+    ).toBe(true);
+  });
+
+  it("migrates a real .claude/skills directory from older versions to a symlink", () => {
+    const home = mkdtempSync(join(tmpdir(), "home-"));
+    mkdirSync(join(home, ".claude"), { recursive: true });
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const env = { BRAG_HOME: dataDir, HOME: home };
+
+    // Old layout: a real directory, possibly read-only from a store copy.
+    const oldDir = join(dataDir, ".claude", "skills", "toot");
+    mkdirSync(oldDir, { recursive: true });
+    writeFileSync(join(oldDir, "SKILL.md"), "old");
+    execFileSync("chmod", ["-R", "a-w", join(dataDir, ".claude", "skills")]);
+
+    run(["init"], env);
+    expect(lstatSync(join(dataDir, ".claude", "skills")).isSymbolicLink()).toBe(
+      true
+    );
+    expect(
+      readFileSync(
+        join(dataDir, ".claude", "skills", "toot", "SKILL.md"),
+        "utf8"
+      )
+    ).not.toBe("old");
+  });
+});
+
 describe("brag init re-run", () => {
   it("refreshes skills even when a previous copy left them read-only", () => {
     const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
@@ -93,7 +148,7 @@ describe("brag init re-run", () => {
     run(["init"], env);
 
     // Simulate a copy that inherited Nix-store permissions (dirs 555, files 444).
-    const skillsDir = join(dataDir, ".claude", "skills");
+    const skillsDir = join(dataDir, ".agents", "skills");
     execFileSync("chmod", ["-R", "a-w", skillsDir]);
 
     run(["init"], env);

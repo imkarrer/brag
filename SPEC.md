@@ -74,7 +74,8 @@ User data dir (separate, private, location flexible — see v2 note above):
 entries.jsonl      # append-only accomplishment records
 state.json         # harvest watermarks (last-run timestamp per source)
 reports/           # generated reports, kept for posterity
-.claude/skills/    # copied here by `brag init`
+.agents/skills/    # canonical skills home, installed by `brag init`
+.claude/skills     # symlink adapter, created when Claude Code is detected
 ```
 
 ### Entry schema

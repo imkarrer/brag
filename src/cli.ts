@@ -3,10 +3,12 @@ import {
   chmodSync,
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -155,9 +157,42 @@ function refreshSkills(dest: string): void {
   makeWritable(dest);
 }
 
+// Skills live canonically in .agents/skills. Harnesses that don't read
+// .agents get a symlink adapter, created only when that harness is
+// actually installed on this machine (detected by its home directory).
+const HARNESS_ADAPTERS = [
+  { name: "Claude Code", detect: ".claude", linkDir: ".claude" },
+];
+
+function installSkills(): string[] {
+  refreshSkills(join(dataDir, ".agents", "skills"));
+  const linked: string[] = [];
+  for (const harness of HARNESS_ADAPTERS) {
+    if (!existsSync(join(homedir(), harness.detect))) continue;
+    const link = join(dataDir, harness.linkDir, "skills");
+    let present = false;
+    try {
+      if (lstatSync(link).isSymbolicLink()) present = true;
+      else {
+        // A real directory from an older version: replace with the symlink.
+        makeWritable(link);
+        rmSync(link, { recursive: true, force: true });
+      }
+    } catch {
+      // No entry at all.
+    }
+    if (!present) {
+      mkdirSync(dirname(link), { recursive: true });
+      symlinkSync(join("..", ".agents", "skills"), link);
+    }
+    linked.push(harness.name);
+  }
+  return linked;
+}
+
 function init(): void {
   mkdirSync(dataDir, { recursive: true });
-  refreshSkills(join(dataDir, ".claude", "skills"));
+  const linkedHarnesses = installSkills();
   const cfg = configPath(homedir(), process.env);
   if (!process.env["BRAG_HOME"] && !existsSync(cfg)) {
     mkdirSync(dirname(cfg), { recursive: true });
@@ -175,7 +210,10 @@ function init(): void {
       : "plain files (re-run with --git, or `git init` there yourself, to get auto-commits)."
   );
   console.log(
-    "Claude Code skills installed: /toot /harvest /backfill /report /share-report"
+    "skills installed to .agents/skills: /toot /harvest /backfill /report /share-report" +
+      (linkedHarnesses.length > 0
+        ? ` (linked for ${linkedHarnesses.join(", ")})`
+        : "")
   );
 }
 

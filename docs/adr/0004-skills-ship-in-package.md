@@ -1,5 +1,8 @@
 # Claude Code skills ship in the package and install into the data dir
 
+_Install location amended by ADR 0006: canonically `.agents/skills/`, with
+per-harness symlink adapters._
+
 The work splits two ways: the CLI does deterministic mechanics
 (append/dedupe/validate, windows, watermarks) and Claude Code skills do
 judgment (significance, impact drafting, theming, narrative). The skills are
