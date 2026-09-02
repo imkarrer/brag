@@ -15,7 +15,17 @@
     },
     "hook": {},
     "profile": {},
-    "options": {}
+    "options": {},
+    "build": {
+      "brag": {
+        "command": "  mkdir -p $out/bin $out/lib/brag\n  cp -r src skills package.json $out/lib/brag/\n  cat > $out/bin/brag <<WRAPPER\n#!/usr/bin/env bash\nexec node --no-warnings \"$out/lib/brag/src/cli.ts\" \"\\$@\"\nWRAPPER\n  chmod +x $out/bin/brag\n",
+        "runtime-packages": [
+          "nodejs"
+        ],
+        "version": "0.1.0",
+        "description": "AI-centric accomplishment ledger for performance reviews"
+      }
+    }
   },
   "packages": [
     {

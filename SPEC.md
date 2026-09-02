@@ -1,16 +1,28 @@
-# perf-review-input-tracker — Spec
+# brag — Spec
 
-A private, AI-maintained ledger of work accomplishments at Flox, plus a report
+An open-source, AI-maintained ledger of work accomplishments, plus a report
 generator that turns any date window into a drill-down story for a performance
 review. This is input to the review process — deliberate horn-tooting, kept
 continuously so nothing is forgotten by review time.
+
+**v2 architecture: tool and data are split.** This repo is the public tool —
+a `brag` CLI packaged and distributed with Flox (`flox install imkarrer/brag`)
+plus the Claude Code skills it ships. Each user's ledger lives in a separate
+data directory chosen at `brag init` time: a personal git repo (every write
+auto-commits) or plain files. Resolution order for the data dir:
+`--data-dir` flag > `$BRAG_HOME` > `~/.config/brag/config.json` > default
+`~/.local/share/brag`. The CLI does the deterministic mechanics
+(append/dedupe/validate, window reads, watermarks); the skills — installed
+into the data dir by `brag init` so they're available where the user runs
+Claude Code — do the judgment (significance, impact drafting, theming,
+narrative).
 
 ## Goals
 
 1. **Never lose an accomplishment.** Automated weekly harvest from GitHub and
    Linear; frictionless manual capture for everything without a digital trail.
 2. **Whole-tenure ledger.** One append-only record from first day at Flox
-   onward. Reports are generated *from* the ledger for any `[from, to]` window;
+   onward. Reports are generated _from_ the ledger for any `[from, to]` window;
    the ledger itself is never rewritten per review cycle.
 3. **Glance-then-drill reports.** A manager reads the top of the report in 60
    seconds; every claim expands in place to its narrative and then to its
@@ -24,7 +36,7 @@ continuously so nothing is forgotten by review time.
 
 ## Storage: JSONL, with an explicit exit ramp to SQLite
 
-**Decision: `ledger/entries.jsonl`, one JSON object per line, in this git repo.**
+**Decision: `entries.jsonl` in the user's data dir, one JSON object per line.**
 
 Why JSONL wins at tenure scale: a very productive year produces maybe 150–300
 ledger entries. A ten-year tenure is ~2–3k lines, single-digit megabytes.
@@ -48,14 +60,21 @@ entries.jsonl --nl`). JSONL now costs nothing later.
 
 ### Files
 
+Tool repo (this repo, public):
+
 ```
-ledger/
-  entries.jsonl      # append-only accomplishment records
-  state.json         # harvest watermarks (last-run timestamp per source)
-reports/
-  2026-H2-review.html  # generated reports, kept for posterity
-SPEC.md
-.claude/skills/      # the commands (below)
+src/               # CLI + ledger library (TypeScript, run natively by node)
+skills/            # Claude Code skills shipped in the package
+.flox/             # dev environment + [build.brag] package definition
+```
+
+User data dir (separate, private, location flexible — see v2 note above):
+
+```
+entries.jsonl      # append-only accomplishment records
+state.json         # harvest watermarks (last-run timestamp per source)
+reports/           # generated reports, kept for posterity
+.claude/skills/    # copied here by `brag init`
 ```
 
 ### Entry schema
@@ -90,12 +109,12 @@ SPEC.md
 
 ## Sources
 
-| Source | Mechanism | Headless-safe? |
-|---|---|---|
-| GitHub | `gh` CLI: merged PRs authored, substantial reviews, releases cut, across flox org repos | Yes (`gh auth` token) |
-| Linear | Linear GraphQL API with `LINEAR_API_KEY` (personal API key) — **not** the interactive MCP connector | Yes |
-| Manual | `/toot` command, interactive | n/a (interactive by nature) |
-| Kudos | `/toot --kudos`, paste the Slack message | n/a |
+| Source | Mechanism                                                                                                   | Headless-safe?              |
+| ------ | ----------------------------------------------------------------------------------------------------------- | --------------------------- |
+| GitHub | `gh` CLI: merged PRs authored, substantial reviews, releases cut, across the orgs in `github_owners` config | Yes (`gh auth` token)       |
+| Linear | Linear GraphQL API with `LINEAR_API_KEY` (personal API key) — **not** the interactive MCP connector         | Yes                         |
+| Manual | `/toot` command, interactive                                                                                | n/a (interactive by nature) |
+| Kudos  | `/toot --kudos`, paste the Slack message                                                                    | n/a                         |
 
 The Linear MCP server connected in interactive sessions may be absent in
 headless/cron runs, so the harvest skill talks to Linear's GraphQL API directly
@@ -109,9 +128,10 @@ are skipped or rolled up ("14 dependency/CI maintenance PRs this period" as a
 single entry). Borderline items are included — deleting from a ledger is easy,
 remembering a forgotten win in February is not.
 
-## Commands (Claude Code project skills)
+## Commands (Claude Code skills, installed by `brag init`)
 
 ### `/harvest`
+
 1. Read `state.json` watermarks.
 2. Pull new GitHub activity (authored PRs merged, reviews given, releases) and
    completed Linear issues/projects since the watermark.
@@ -123,17 +143,20 @@ remembering a forgotten win in February is not.
    about. In headless runs, commit and exit silently.
 
 ### `/toot [text]`
+
 Manual capture, optimized for a 30-second interaction: paste or describe the
 thing; the skill asks at most one or two follow-ups (usually "what was the
 impact?"), writes the entry, commits. `--kudos` variant tags `source: kudos`
 and preserves the quoted praise verbatim in `summary` with attribution.
 
 ### `/report <from> <to> [--audience manager|self]`
+
 Generates the drill-down report (format below) from all entries in the window,
 writes it to `reports/`, and publishes it as a **private Claude artifact** —
 manager gets one link, sharing stays opt-in.
 
 ### `/backfill <start-date>`
+
 One-time bootstrap for existing tenure: same pipeline as `/harvest` but from
 employment start date, chunked by month so it's resumable. Expected to surface
 a lot; runs interactively so borderline calls can be reviewed. After backfill,
@@ -143,7 +166,7 @@ customers helped, processes influenced).
 ## Report format: one document, three levels of disclosure
 
 Single self-contained HTML page (artifact-ready), no external navigation.
-Everything drills down *in place* via `<details>` — the reader never jumps to
+Everything drills down _in place_ via `<details>` — the reader never jumps to
 an appendix.
 
 **Level 1 — the glance** (one screen): review window, four or five headline
@@ -171,8 +194,8 @@ better — a Monday-morning job on a laptop that was asleep at cron-time never
 runs; `launchd` runs it on wake):
 
 ```
-# crontab: Mondays 9am
-0 9 * * 1 cd ~/src/perf-review-input-tracker && claude -p "/harvest" --allowedTools "Bash,Read,Write,Edit"
+# crontab: Mondays 9am, from the DATA dir (where the skills live)
+0 9 * * 1 cd ~/.local/share/brag && claude -p "/harvest" --allowedTools "Bash,Read,Write,Edit"
 ```
 
 Requirements for headless: `gh auth status` green, `LINEAR_API_KEY` in the
@@ -183,16 +206,16 @@ in memory.
 
 ## Privacy
 
-The repo stays private and local (or on a private remote). Reports may quote
-colleagues' kudos — sharing a report means sharing those quotes; the artifact
-link stays private until deliberately shared. No Slack tokens, no scraping.
+The tool repo is public; the data dir is not — it holds performance claims
+and colleagues' kudos, so it belongs in a private repo (or plain local
+files), never the tool repo. Reports may quote kudos — sharing a report means
+sharing those quotes; the artifact link stays private until deliberately
+shared. No Slack tokens, no scraping.
 
-## Implementation order
+## Distribution
 
-1. `git init`, directory layout, schema doc (this file).
-2. `/toot` — capture works on day one, before any automation exists.
-3. `/backfill` + a review pass over what it finds (the "already under my belt"
-   problem is the most time-sensitive one).
-4. `/harvest` + crontab/launchd entry.
-5. `/report` + first real report against the backfilled ledger to validate the
-   drill-down format with your actual manager-audience in mind.
+The whole point of the Flox packaging: `[build.brag]` in the manifest builds
+the package (`flox build`), and `flox publish` pushes it to FloxHub under
+`imkarrer/`, so installation is `flox install imkarrer/brag` on any machine —
+nodejs rides along in the package's runtime closure, no separate runtime
+install. The repo is also its own dev environment (`flox activate`).

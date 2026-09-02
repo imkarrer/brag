@@ -74,15 +74,19 @@ gh.pkg-path = "gh"
 ##  $ flox build
 ##  $ flox publish
 ## ------------------------------------------------------------------
-[build]
-# [build.myproject]
-# description = "The coolest project ever"
-# version = "0.0.1"
-# command = """
-#   mkdir -p $out/bin
-#   cargo build --release
-#   cp target/release/myproject $out/bin/myproject
-# """
+[build.brag]
+description = "AI-centric accomplishment ledger for performance reviews"
+version = "0.1.0"
+runtime-packages = ["nodejs"]
+command = '''
+  mkdir -p $out/bin $out/lib/brag
+  cp -r src skills package.json $out/lib/brag/
+  cat > $out/bin/brag <<WRAPPER
+#!/usr/bin/env bash
+exec node --no-warnings "$out/lib/brag/src/cli.ts" "\$@"
+WRAPPER
+  chmod +x $out/bin/brag
+'''
 
 
 ## Other Environment Options -----------------------------------------

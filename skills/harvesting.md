@@ -1,24 +1,24 @@
 # Harvest procedure
 
 Shared reference for the `/harvest` and `/backfill` skills: how to pull
-accomplishments from each source and turn them into ledger entries. The entry
-schema's source of truth is `src/ledger.ts`; the CLI rejects invalid entries
+accomplishments from each source and turn them into brag ledger entries.
+`brag schema` prints the entry fields; `brag append` rejects invalid entries
 with the field named, so draft, pipe, and fix on error.
-
-All commands run inside the flox environment: `flox activate -- <cmd>`.
 
 ## GitHub (gh CLI)
 
-Identify the user with `gh api user --jq .login`. For a window `[SINCE, UNTIL]`:
+Identify the user with `gh api user --jq .login`. The org/owner list to
+search comes from `github_owners` in `~/.config/brag/config.json`; if absent,
+ask once and save it there. For a window `[SINCE, UNTIL]`:
 
 ```bash
 # Merged PRs authored
-gh search prs --author "$LOGIN" --owner flox --merged \
+gh search prs --author "$LOGIN" --owner "$OWNER" --merged \
   --merged-at "$SINCE..$UNTIL" --limit 200 \
   --json repository,number,title,url,closedAt
 
 # Substantial reviews given (exclude own PRs)
-gh search prs --reviewed-by "$LOGIN" --owner flox --merged \
+gh search prs --reviewed-by "$LOGIN" --owner "$OWNER" --merged \
   --merged-at "$SINCE..$UNTIL" --limit 200 \
   --json repository,number,title,url,closedAt,author
 ```
@@ -33,10 +33,10 @@ For each candidate PR, fetch the body for impact drafting:
 
 ## Linear (GraphQL API)
 
-Use `LINEAR_API_KEY` from the environment — the MCP connector is absent in
-headless runs, so the API path is the one that must always work. If the key is
-missing in an interactive run, fall back to the Linear MCP tools; in a
-headless run, skip Linear and note it in the commit message.
+Use `LINEAR_API_KEY` from the environment — MCP connectors are absent in
+headless runs, so the API path is the one that must always work. If the key
+is missing in an interactive run, fall back to Linear MCP tools when
+available; in a headless run, skip Linear and report it.
 
 ```bash
 curl -s https://api.linear.app/graphql \
@@ -60,7 +60,7 @@ The ledger records accomplishments, not activity. Judge each candidate:
 - **Keep**: features, fixes with user-visible or reliability impact, releases,
   design/infra work, reviews that materially shaped someone else's change.
 - **Roll up**: dependency bumps, lockfile updates, CI churn, typo fixes —
-  one entry per window per repo ("N maintenance PRs in flox/flox"), id
+  one entry per window per repo ("N maintenance PRs in owner/repo"), id
   `gh-pr:<owner>/<repo>#rollup-<SINCE>`, kind `pr_merged`.
 - **Borderline**: include it. Deleting a line later is easy; remembering a
   forgotten win at review time is not.
@@ -73,23 +73,12 @@ The ledger records accomplishments, not activity. Judge each candidate:
 drafted from the PR/issue body and linked context, one or two sentences,
 concrete over grand ("cut activation time ~40% for composed envs" beats
 "improved performance"). `summary` says what was done; `tags` are free-form
-themes reused across entries where possible (check existing tags with
-`jq -r .tags[] ledger/entries.jsonl | sort -u`).
+themes reused across entries where possible (existing tags:
+`brag read | jq -r '.tags[]' | sort -u`).
 
-## Append and commit
+## Append
 
-Pipe drafted entries as a JSON array to the CLI — it dedupes by id and
-validates:
-
-```bash
-flox activate -- sh -c 'node src/cli.ts append < drafted.json'
-```
-
-Update the watermark per harvested source to the run's start time:
-
-```bash
-flox activate -- node src/cli.ts watermark set github "$RUN_STARTED_AT"
-```
-
-Commit ledger and state together: `harvest: <date>, <n> entries` (or
-`backfill: <month>, <n> entries`).
+Pipe drafted entries as a JSON array to `brag append` — it dedupes by id,
+validates, and auto-commits when the data dir is git-backed. Then
+`brag watermark set <source> <run-start-time>` per harvested source, and push
+if the data repo has a remote.

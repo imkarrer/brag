@@ -40,12 +40,12 @@ export function readEntries(ledgerPath: string, window?: Window): Entry[] {
   return entries.filter(
     (e) =>
       (window.from === undefined || e.date >= window.from) &&
-      (window.to === undefined || e.date <= window.to),
+      (window.to === undefined || e.date <= window.to)
   );
 }
 
-const SOURCES: Source[] = ["github", "linear", "manual", "kudos"];
-const KINDS: Kind[] = [
+export const SOURCES: Source[] = ["github", "linear", "manual", "kudos"];
+export const KINDS: Kind[] = [
   "pr_merged",
   "review",
   "release",
@@ -68,7 +68,8 @@ function validateEntry(e: Entry): void {
     fail("date", "must be YYYY-MM-DD");
   if (!SOURCES.includes(e.source))
     fail("source", `must be one of ${SOURCES.join(", ")}`);
-  if (!KINDS.includes(e.kind)) fail("kind", `must be one of ${KINDS.join(", ")}`);
+  if (!KINDS.includes(e.kind))
+    fail("kind", `must be one of ${KINDS.join(", ")}`);
   for (const field of ["tags", "links"] as const) {
     if (!Array.isArray(e[field]) || e[field].some((v) => typeof v !== "string"))
       fail(field, "must be an array of strings");
@@ -79,7 +80,7 @@ function validateEntry(e: Entry): void {
 
 export function appendEntries(
   ledgerPath: string,
-  entries: Entry[],
+  entries: Entry[]
 ): AppendResult {
   for (const e of entries) validateEntry(e);
   const existing = new Set(readEntries(ledgerPath).map((e) => e.id));
