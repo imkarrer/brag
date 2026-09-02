@@ -1,9 +1,12 @@
 import { execFileSync } from "node:child_process";
 import {
+  chmodSync,
   cpSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -132,11 +135,29 @@ function skillsSource(): string {
   return join(import.meta.dirname, "..", "skills");
 }
 
+// chmod u+w everything under dir so a previous copy that inherited
+// read-only Nix-store permissions can be removed and re-copied.
+function makeWritable(dir: string): void {
+  chmodSync(dir, 0o755);
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) makeWritable(p);
+    else chmodSync(p, 0o644);
+  }
+}
+
+function refreshSkills(dest: string): void {
+  if (existsSync(dest)) {
+    makeWritable(dest);
+    rmSync(dest, { recursive: true, force: true });
+  }
+  cpSync(skillsSource(), dest, { recursive: true });
+  makeWritable(dest);
+}
+
 function init(): void {
   mkdirSync(dataDir, { recursive: true });
-  cpSync(skillsSource(), join(dataDir, ".claude", "skills"), {
-    recursive: true,
-  });
+  refreshSkills(join(dataDir, ".claude", "skills"));
   const cfg = configPath(homedir(), process.env);
   if (!process.env["BRAG_HOME"] && !existsSync(cfg)) {
     mkdirSync(dirname(cfg), { recursive: true });

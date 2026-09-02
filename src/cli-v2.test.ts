@@ -86,6 +86,23 @@ describe("brag init", () => {
   });
 });
 
+describe("brag init re-run", () => {
+  it("refreshes skills even when a previous copy left them read-only", () => {
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const env = { BRAG_HOME: dataDir };
+    run(["init"], env);
+
+    // Simulate a copy that inherited Nix-store permissions (dirs 555, files 444).
+    const skillsDir = join(dataDir, ".claude", "skills");
+    execFileSync("chmod", ["-R", "a-w", skillsDir]);
+
+    run(["init"], env);
+    expect(existsSync(join(skillsDir, "toot", "SKILL.md"))).toBe(true);
+    // And the refreshed copy is writable, so the next refresh works too.
+    run(["init"], env);
+  });
+});
+
 describe("brag toot", () => {
   it("records a toot from flags and rejects a missing impact when not a TTY", () => {
     const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
