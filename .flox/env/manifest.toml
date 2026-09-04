@@ -10,6 +10,7 @@ schema-version = "1.15.0"
 nodejs.pkg-path = "nodejs"
 jq.pkg-path = "jq"
 gh.pkg-path = "gh"
+marp-cli.pkg-path = "marp-cli"
 # gum.pkg-path = "gum"
 # gum.version = "^0.14.5"
 
@@ -76,8 +77,8 @@ gh.pkg-path = "gh"
 ## ------------------------------------------------------------------
 [build.brag]
 description = "AI-centric accomplishment ledger for performance reviews"
-version = "0.6.0"
-runtime-packages = ["nodejs"]
+version = "0.7.0"
+runtime-packages = ["nodejs", "marp-cli"]
 command = '''
   mkdir -p $out/bin $out/lib/brag
   cp -r src skills package.json $out/lib/brag/

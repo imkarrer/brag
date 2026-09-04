@@ -85,7 +85,17 @@ ${group.map(entryRow).join("\n")}
   details { margin: 1rem 0; }
   li { margin: 0.6rem 0; }
   small a { color: inherit; }
+  @media print {
+    details > * { display: block !important; }
+    details { border: none; }
+    body { padding: 0; }
+  }
 </style>
+<script>
+  window.addEventListener("beforeprint", () => {
+    document.querySelectorAll("details").forEach((d) => (d.open = true));
+  });
+</script>
 </head>
 <body>
 <h1>Accomplishments</h1>

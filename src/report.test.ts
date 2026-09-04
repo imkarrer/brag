@@ -33,9 +33,19 @@ describe("renderReport", () => {
     expect(html).toContain("Everything else");
     expect(html.match(/Fix flaky activation/g)).toHaveLength(1);
     expect(html.match(/Retry harness/g)).toHaveLength(1);
-    // HTML is escaped
-    expect(html).not.toContain("<script>");
+    // Entry content is escaped — the raw title must never appear as markup
+    expect(html).not.toContain("Odd job <script>");
     expect(html).toContain("Odd job &lt;script&gt;");
+  });
+
+  it("prints with every drill-down expanded", () => {
+    const html = renderReport([entry({ id: "a" })], {
+      from: "2026-01-01",
+      to: "2026-06-30",
+    });
+    // beforeprint opens all <details>; print CSS backs it up.
+    expect(html).toContain("beforeprint");
+    expect(html).toContain("@media print");
   });
 
   it("shows headline counts for the window", () => {
