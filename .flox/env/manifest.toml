@@ -77,7 +77,7 @@ marp-cli.pkg-path = "marp-cli"
 ## ------------------------------------------------------------------
 [build.brag]
 description = "AI-centric accomplishment ledger for performance reviews"
-version = "0.7.1"
+version = "0.8.0"
 runtime-packages = ["nodejs", "marp-cli"]
 command = '''
   mkdir -p $out/bin $out/lib/brag

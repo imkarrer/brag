@@ -221,7 +221,7 @@ function init(): void {
       : "plain files (re-run with --git, or `git init` there yourself, to get auto-commits)."
   );
   console.log(
-    "skills installed to .agents/skills: /toot /harvest /backfill /report /deck /share-report" +
+    "skills installed to .agents/skills: /toot /harvest /backfill /report /onepager /share-report" +
       (linkedHarnesses.length > 0
         ? ` (linked for ${linkedHarnesses.join(", ")})`
         : "")
