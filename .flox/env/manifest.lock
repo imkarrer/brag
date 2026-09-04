@@ -9,9 +9,6 @@
       "jq": {
         "pkg-path": "jq"
       },
-      "marp-cli": {
-        "pkg-path": "marp-cli"
-      },
       "nodejs": {
         "pkg-path": "nodejs"
       }
@@ -21,12 +18,11 @@
     "options": {},
     "build": {
       "brag": {
-        "command": "  mkdir -p $out/bin $out/lib/brag\n  cp -r src skills package.json $out/lib/brag/\n  ln -s \"$(command -v marp)\" $out/bin/marp\n  cat > $out/bin/brag <<WRAPPER\n#!/usr/bin/env bash\nexec node --no-warnings \"$out/lib/brag/src/cli.ts\" \"\\$@\"\nWRAPPER\n  chmod +x $out/bin/brag\n",
+        "command": "  mkdir -p $out/bin $out/lib/brag\n  cp -r src skills package.json $out/lib/brag/\n  cat > $out/bin/brag <<WRAPPER\n#!/usr/bin/env bash\nexec node --no-warnings \"$out/lib/brag/src/cli.ts\" \"\\$@\"\nWRAPPER\n  chmod +x $out/bin/brag\n",
         "runtime-packages": [
-          "nodejs",
-          "marp-cli"
+          "nodejs"
         ],
-        "version": "0.8.0",
+        "version": "0.9.0",
         "description": "AI-centric accomplishment ledger for performance reviews"
       }
     }
@@ -218,93 +214,6 @@
         "doc": "/nix/store/2ga5gcahn4vr0b5fmlinxbz1w2m4qm5g-jq-1.8.2-doc",
         "man": "/nix/store/n36fiv9a8p19bcj6cyjfgmb0l9s55qfn-jq-1.8.2-man",
         "out": "/nix/store/d91mwgs15hv4ajza7jn6axyiwa07ga7m-jq-1.8.2"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "marp-cli",
-      "broken": false,
-      "derivation": "/nix/store/p0hz3q0ffhn46ggpvi8g5299xm3kwm0d-marp-cli-4.5.0.drv",
-      "description": "About A CLI interface for Marp and Marpit based converters",
-      "install_id": "marp-cli",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "name": "marp-cli-4.5.0",
-      "pname": "marp-cli",
-      "rev": "3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "rev_count": 1066106,
-      "rev_date": "2026-09-02T02:38:36Z",
-      "scrape_date": "2026-09-04T04:57:53.179581Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "4.5.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/r6i1ilinbm693vlc8rncsiy1jgl96i6s-marp-cli-4.5.0"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "marp-cli",
-      "broken": false,
-      "derivation": "/nix/store/93dxzl53wshzbx1plpkvk7133njnzii8-marp-cli-4.5.0.drv",
-      "description": "About A CLI interface for Marp and Marpit based converters",
-      "install_id": "marp-cli",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "name": "marp-cli-4.5.0",
-      "pname": "marp-cli",
-      "rev": "3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "rev_count": 1066106,
-      "rev_date": "2026-09-02T02:38:36Z",
-      "scrape_date": "2026-09-04T05:29:45.568621Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "4.5.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/ih59zr1wg94lx7s29zk96r7dimhw10j7-marp-cli-4.5.0"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "marp-cli",
-      "broken": false,
-      "derivation": "/nix/store/1550a3vi8z6ks6va10rl0aq22s91dmxc-marp-cli-4.5.0.drv",
-      "description": "About A CLI interface for Marp and Marpit based converters",
-      "install_id": "marp-cli",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "name": "marp-cli-4.5.0",
-      "pname": "marp-cli",
-      "rev": "3ed67ec0a4d3c7ab4ae1f04f8ee8df07bfa506a2",
-      "rev_count": 1066106,
-      "rev_date": "2026-09-02T02:38:36Z",
-      "scrape_date": "2026-09-04T06:06:19.054213Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "4.5.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/3gb60hqbaw35w5qiiwg57s29vg5rcq8q-marp-cli-4.5.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

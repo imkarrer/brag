@@ -23,7 +23,7 @@ import {
   type LinearIssue,
 } from "./candidates.ts";
 import { configPath, resolveDataDir } from "./config.ts";
-import { renderReport } from "./report.ts";
+import { renderMarkdownReport, renderReport } from "./report.ts";
 import {
   CRON_MARKER,
   LAUNCHD_LABEL,
@@ -221,7 +221,7 @@ function init(): void {
       : "plain files (re-run with --git, or `git init` there yourself, to get auto-commits)."
   );
   console.log(
-    "skills installed to .agents/skills: /toot /harvest /backfill /report /onepager /share-report" +
+    "skills installed to .agents/skills: /toot /harvest /backfill /report /share-report" +
       (linkedHarnesses.length > 0
         ? ` (linked for ${linkedHarnesses.join(", ")})`
         : "")
@@ -420,10 +420,18 @@ function report(): void {
     outPath,
     renderReport(entries, { from: values.from, to: values.to })
   );
+  const mdPath = outPath.endsWith(".html")
+    ? outPath.slice(0, -5) + ".md"
+    : outPath + ".md";
+  writeFileSync(
+    mdPath,
+    renderMarkdownReport(entries, { from: values.from, to: values.to })
+  );
   console.error(
     "tag-grouped render. For a themed, narrative report, run /report in Claude Code from your data dir."
   );
   console.log(outPath);
+  console.log(mdPath);
 }
 
 function which(cmd: string): string | null {

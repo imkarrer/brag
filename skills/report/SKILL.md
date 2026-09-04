@@ -31,10 +31,15 @@ reads top-down: glance → theme narratives → in-place evidence, all via
    - **Evidence**: within each narrative, an expandable list of the backing
      entries — date, title, one-line impact, direct PR/issue links; kudos
      quoted verbatim.
-6. Load the `artifact-design` skill, then write the report to
-   `reports/<from>--<to>.html` in the data dir as a self-contained page and
-   publish it as a private artifact (a report is shared by sending the link,
-   deliberately).
+6. Write the report twice, same themes and narrative in both:
+   - `reports/<from>--<to>.html` — self-contained page (load the
+     `artifact-design` skill first), published as a private artifact; the
+     link is shared deliberately, person by person.
+   - `reports/<from>--<to>.md` — the same story as GitHub-flavored
+     Markdown using `<details>` for the drill-down. This is the copy a
+     read-only collaborator on the data repo reads, rendered by GitHub
+     itself with the same expand-in-place experience.
+     Commit both; push if the data repo has a remote.
 
-Done when the artifact link is delivered and every window entry is in the
-page exactly once.
+Done when both files are committed, the artifact link is delivered, and
+every window entry is in each exactly once.

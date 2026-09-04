@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./ledger.ts";
-import { renderReport } from "./report.ts";
+import { renderMarkdownReport, renderReport } from "./report.ts";
 
 const entry = (overrides: Partial<Entry> & Pick<Entry, "id">): Entry => ({
   date: "2026-05-01",
@@ -36,6 +36,26 @@ describe("renderReport", () => {
     // Entry content is escaped — the raw title must never appear as markup
     expect(html).not.toContain("Odd job <script>");
     expect(html).toContain("Odd job &lt;script&gt;");
+  });
+
+  it("renders a markdown twin with the same drill-down via details tags", () => {
+    const md = renderMarkdownReport(
+      [
+        entry({
+          id: "a",
+          tags: ["reliability"],
+          title: "Fix flaky activation",
+        }),
+        entry({ id: "b" }),
+      ],
+      { from: "2026-01-01", to: "2026-06-30" }
+    );
+    expect(md).toContain("<details>");
+    expect(md).toContain("reliability");
+    expect(md).toContain("Everything else");
+    expect(md.match(/Fix flaky activation/g)).toHaveLength(1);
+    expect(md).toContain("2026-01-01");
+    expect(md).toContain("https://github.com/x/y/pull/1");
   });
 
   it("prints with every drill-down expanded", () => {

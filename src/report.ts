@@ -55,6 +55,41 @@ function entryRow(e: Entry): string {
 ${esc(e.impact !== "" ? e.impact : e.summary)}${links ? `<br><small>${links}</small>` : ""}</li>`;
 }
 
+// The markdown twin of the HTML report: GitHub renders <details> in .md,
+// so a repo collaborator gets the same glance -> drill-down experience
+// directly in the repository UI.
+export function renderMarkdownReport(
+  entries: Entry[],
+  window: { from: string; to: string }
+): string {
+  const groups = groupByFirstTag(
+    [...entries].sort((a, b) => a.date.localeCompare(b.date))
+  );
+  const stats = headline(entries)
+    .replaceAll(/<[^>]+>/g, "")
+    .split("\n")
+    .join(" · ");
+  const sections = [...groups.entries()]
+    .map(([tag, group]) => {
+      const rows = group
+        .map(
+          (e) =>
+            `- **${e.date}** — ${e.title}\n  ${e.impact !== "" ? e.impact : e.summary}${
+              e.links.length > 0 ? ` — ${e.links.join(" · ")}` : ""
+            }`
+        )
+        .join("\n");
+      return `<details>\n<summary><strong>${tag}</strong> (${group.length})</summary>\n\n${rows}\n\n</details>`;
+    })
+    .join("\n\n");
+  return `# Accomplishments — ${window.from} → ${window.to}
+
+${entries.length} entries · ${stats}
+
+${sections}
+`;
+}
+
 export function renderReport(
   entries: Entry[],
   window: { from: string; to: string }

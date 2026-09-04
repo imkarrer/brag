@@ -202,12 +202,16 @@ describe("brag report", () => {
       env
     );
 
-    const outPath = run(
+    const [htmlPath, mdPath] = run(
       ["report", "--from", "2026-01-01", "--to", "2026-06-30"],
       env
-    ).trim();
-    expect(outPath).toContain("2026-01-01--2026-06-30.html");
-    expect(readFileSync(outPath, "utf8")).toContain("Shipped the pipeline");
+    )
+      .trim()
+      .split("\n");
+    expect(htmlPath).toContain("2026-01-01--2026-06-30.html");
+    expect(readFileSync(htmlPath!, "utf8")).toContain("Shipped the pipeline");
+    expect(mdPath).toContain("2026-01-01--2026-06-30.md");
+    expect(readFileSync(mdPath!, "utf8")).toContain("<details>");
   });
 });
 

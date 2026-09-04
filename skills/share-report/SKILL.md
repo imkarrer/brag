@@ -26,6 +26,12 @@ quotes colleagues by name.
    people or org. Re-running `/share-report` after regenerating the report
    updates the same link, so reviewers never hold a stale copy.
 4. If the user wants a channel outside Claude:
+   - **Read-only repo collaborator.** For a standing reviewer (a manager),
+     add them to the private data repo with pull access:
+     `gh api -X PUT repos/<owner>/<repo>/collaborators/<handle> -f permission=pull`.
+     They read `reports/<window>.md` rendered by GitHub with the same
+     drill-down. Say plainly first: a collaborator sees the whole ledger —
+     every raw entry and kudos — not just curated reports.
    - **Send the file.** The report HTML is self-contained; attaching it to
      email or Slack shares it with exactly the recipients. Offer to
      surface the file for them.
