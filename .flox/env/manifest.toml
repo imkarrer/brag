@@ -77,11 +77,12 @@ marp-cli.pkg-path = "marp-cli"
 ## ------------------------------------------------------------------
 [build.brag]
 description = "AI-centric accomplishment ledger for performance reviews"
-version = "0.7.0"
+version = "0.7.1"
 runtime-packages = ["nodejs", "marp-cli"]
 command = '''
   mkdir -p $out/bin $out/lib/brag
   cp -r src skills package.json $out/lib/brag/
+  ln -s "$(command -v marp)" $out/bin/marp
   cat > $out/bin/brag <<WRAPPER
 #!/usr/bin/env bash
 exec node --no-warnings "$out/lib/brag/src/cli.ts" "\$@"

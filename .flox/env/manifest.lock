@@ -21,12 +21,12 @@
     "options": {},
     "build": {
       "brag": {
-        "command": "  mkdir -p $out/bin $out/lib/brag\n  cp -r src skills package.json $out/lib/brag/\n  cat > $out/bin/brag <<WRAPPER\n#!/usr/bin/env bash\nexec node --no-warnings \"$out/lib/brag/src/cli.ts\" \"\\$@\"\nWRAPPER\n  chmod +x $out/bin/brag\n",
+        "command": "  mkdir -p $out/bin $out/lib/brag\n  cp -r src skills package.json $out/lib/brag/\n  ln -s \"$(command -v marp)\" $out/bin/marp\n  cat > $out/bin/brag <<WRAPPER\n#!/usr/bin/env bash\nexec node --no-warnings \"$out/lib/brag/src/cli.ts\" \"\\$@\"\nWRAPPER\n  chmod +x $out/bin/brag\n",
         "runtime-packages": [
           "nodejs",
           "marp-cli"
         ],
-        "version": "0.7.0",
+        "version": "0.7.1",
         "description": "AI-centric accomplishment ledger for performance reviews"
       }
     }
