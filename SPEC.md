@@ -152,9 +152,11 @@ and preserves the quoted praise verbatim in `summary` with attribution.
 
 ### `/report <from> <to> [--audience manager|self]`
 
-Generates the drill-down report (format below) from all entries in the window,
-writes it to `reports/`, and publishes it as a **private Claude artifact** —
-manager gets one link, sharing stays opt-in.
+Generates the drill-down report (format below) from all entries in the
+window, written twice with the same story: an HTML page published as a
+**private Claude artifact** (shared person by person, opt-in), and a
+Markdown twin in `reports/` whose `<details>` drill-down GitHub renders for
+read-only collaborators on the data repo.
 
 ### `/backfill <start-date>`
 
@@ -211,7 +213,10 @@ The tool repo is public; the data dir is not — it holds performance claims
 and colleagues' kudos, so it belongs in a private repo (or plain local
 files), never the tool repo. Reports may quote kudos — sharing a report means
 sharing those quotes; the artifact link stays private until deliberately
-shared. No Slack tokens, no scraping.
+shared, and adding a read-only collaborator to the data repo grants them
+the whole ledger, not just reports — a deliberate choice for a standing
+reviewer, stated plainly by /share-report before it happens. No Slack
+tokens, no scraping.
 
 ## Distribution
 

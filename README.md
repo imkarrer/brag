@@ -89,13 +89,30 @@ Then, inside Claude Code:
   the last run. `brag schedule` makes it weekly: launchd on macOS (fires on
   wake instead of skipping laptops that were asleep), crontab on Linux, and
   a plain refusal with the manual command anywhere else.
-- `/report 2026-01-01 2026-06-30` generates the report for a window.
-- `/share-report` publishes a report as a private Claude artifact and hands
-  you the link; you pick exactly who to share it with. (GitHub Pages was
-  deliberately rejected here: Pages sites are readable by anyone with the
-  URL on every plan except Enterprise Cloud, which is the wrong default
-  for a document quoting colleagues by name. The offline alternative is
-  sending the self-contained HTML file.)
+- `/report 2026-01-01 2026-06-30` generates the report for a window, in
+  two forms with the same story: a self-contained HTML page, and a
+  Markdown twin whose `<details>` drill-down GitHub renders natively.
+
+## Sharing with specific people
+
+Reports quote colleagues by name, so every sharing lane here is
+deliberate, never public:
+
+- **A standing reviewer** (your manager): add them as a read-only
+  collaborator on your private data repo —
+  `gh api -X PUT repos/<you>/<ledger>/collaborators/<handle> -f permission=pull`
+  — and they read `reports/<window>.md` on GitHub, drill-down included.
+  Know what this grants: a collaborator sees the whole ledger, raw
+  entries and kudos, not just the curated reports.
+- **One person, one report**: `/share-report` publishes the report as a
+  private Claude artifact and hands you the link; you grant access person
+  by person from the artifact's share menu.
+- **No accounts involved**: send the HTML file itself — it's
+  self-contained, so email or Slack delivers it to exactly the recipients.
+
+GitHub Pages was deliberately rejected: Pages sites are readable by anyone
+with the URL on every plan except Enterprise Cloud, which is the wrong
+default for a document quoting colleagues by name.
 
 Harvesting needs `gh` authenticated, and a `LINEAR_API_KEY` in the
 environment for Linear. When the key is absent, Linear is skipped with a
