@@ -110,12 +110,12 @@ reports/           # generated reports, kept for posterity
 
 ## Sources
 
-| Source | Mechanism                                                                                                   | Headless-safe?              |
-| ------ | ----------------------------------------------------------------------------------------------------------- | --------------------------- |
-| GitHub | `gh` CLI: merged PRs authored, substantial reviews, releases cut, across the orgs in `github_owners` config | Yes (`gh auth` token)       |
-| Linear | Linear GraphQL API with `LINEAR_API_KEY` (personal API key) — **not** the interactive MCP connector         | Yes                         |
-| Manual | `/toot` command, interactive                                                                                | n/a (interactive by nature) |
-| Kudos  | `/toot --kudos`, paste the Slack message                                                                    | n/a                         |
+| Source | Mechanism                                                                                                                                                        | Headless-safe?              |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| GitHub | `gh` CLI: merged PRs authored, substantial reviews, releases cut, across the owners in `github_owners` config, each optionally narrowed by repository visibility | Yes (`gh auth` token)       |
+| Linear | Linear GraphQL API with `LINEAR_API_KEY` (personal API key) — **not** the interactive MCP connector                                                              | Yes                         |
+| Manual | `/toot` command, interactive                                                                                                                                     | n/a (interactive by nature) |
+| Kudos  | `/toot --kudos`, paste the Slack message                                                                                                                         | n/a                         |
 
 The Linear MCP server connected in interactive sessions may be absent in
 headless/cron runs, so the harvest skill talks to Linear's GraphQL API directly

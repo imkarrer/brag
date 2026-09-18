@@ -13,6 +13,29 @@ import { describe, expect, it } from "vitest";
 
 const CLI = join(import.meta.dirname, "cli.ts");
 
+// Same reason as the CLI's own git helper: under a git hook GIT_DIR and
+// GIT_INDEX_FILE are set and beat cwd, so fixture repos created here would
+// otherwise be committed into the repository running the hook.
+const GIT_ENV_OVERRIDES = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_COMMON_DIR",
+  "GIT_NAMESPACE",
+  "GIT_PREFIX",
+];
+
+const gitEnv = (extra: Record<string, string> = {}) => {
+  const env = { ...process.env, ...extra };
+  for (const key of GIT_ENV_OVERRIDES) delete env[key];
+  return env;
+};
+
+const git = (args: string[], cwd: string): string =>
+  execFileSync("git", args, { cwd, encoding: "utf8", env: gitEnv() });
+
 const run = (
   args: string[],
   env: Record<string, string> = {},
@@ -76,12 +99,37 @@ describe("brag init", () => {
     run(["append"], env, entry("t:1"));
     run(["watermark", "set", "github", "2026-09-01T00:00:00Z"], env);
 
-    const log = execFileSync("git", ["log", "--format=%s"], {
-      cwd: dataDir,
-      encoding: "utf8",
-    });
+    const log = git(["log", "--format=%s"], dataDir);
     expect(log).toContain("brag: t:1");
     expect(log).toContain("brag: watermark github");
+  });
+
+  it("commits to the data dir even when git env vars point elsewhere", () => {
+    // Reproduces the pre-commit hook failure: git exports GIT_DIR and
+    // GIT_INDEX_FILE to its hooks, and those beat `cwd`, so a brag write from
+    // inside a hook used to commit into the hooked repository instead of the
+    // ledger. The decoy below stands in for that repository.
+    const decoy = mkdtempSync(join(tmpdir(), "decoy-"));
+    git(["init", "-q", "-b", "main", "."], decoy);
+    writeFileSync(join(decoy, "seed"), "seed\n");
+    git(["add", "-A"], decoy);
+    git(["commit", "-q", "-m", "decoy: seed"], decoy);
+    const decoyHead = () => git(["rev-parse", "HEAD"], decoy).trim();
+    const before = decoyHead();
+
+    const dataDir = join(mkdtempSync(join(tmpdir(), "brag-")), "ledger");
+    const hookEnv = {
+      BRAG_HOME: dataDir,
+      GIT_DIR: join(decoy, ".git"),
+      GIT_INDEX_FILE: join(decoy, ".git", "index"),
+    };
+
+    run(["init", "--git"], hookEnv);
+    run(["append"], hookEnv, entry("t:1"));
+
+    const log = git(["log", "--format=%s"], dataDir);
+    expect(log).toContain("brag: t:1");
+    expect(decoyHead()).toBe(before);
   });
 
   it("without git, writes still succeed as plain files", () => {

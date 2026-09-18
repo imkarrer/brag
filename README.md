@@ -77,6 +77,12 @@ brag append < candidates.jsonl
 brag report --from 2026-01-01 --to 2026-06-30
 ```
 
+`candidates` searches the owners named by `github_owners` in
+`~/.config/brag/config.json`. Each entry is an owner name, or an object
+adding a visibility filter — `{ "owner": "me", "visibility": ["public"] }`
+keeps your own private side projects out of the ledger without excluding
+your employer's private repositories (ADR 0009).
+
 The skills carry the judgment; the CLI carries the mechanics:
 
 | Task    | Plain CLI                                                                    | With the skill                                                                                                                            |
