@@ -27,8 +27,16 @@ const GIT_ENV_OVERRIDES = [
   "GIT_PREFIX",
 ];
 
+// A CI runner has no git identity, so every fixture commit carries its own.
+const GIT_IDENTITY: Record<string, string> = {
+  GIT_AUTHOR_NAME: "brag-test",
+  GIT_AUTHOR_EMAIL: "brag-test@example.invalid",
+  GIT_COMMITTER_NAME: "brag-test",
+  GIT_COMMITTER_EMAIL: "brag-test@example.invalid",
+};
+
 const gitEnv = (extra: Record<string, string> = {}) => {
-  const env = { ...process.env, ...extra };
+  const env = { ...process.env, ...GIT_IDENTITY, ...extra };
   for (const key of GIT_ENV_OVERRIDES) delete env[key];
   return env;
 };
@@ -44,14 +52,9 @@ const run = (
   execFileSync("node", ["--no-warnings", CLI, ...args], {
     input,
     encoding: "utf8",
-    env: {
-      ...process.env,
-      GIT_AUTHOR_NAME: "brag-test",
-      GIT_AUTHOR_EMAIL: "brag-test@example.invalid",
-      GIT_COMMITTER_NAME: "brag-test",
-      GIT_COMMITTER_EMAIL: "brag-test@example.invalid",
-      ...env,
-    },
+    // Not gitEnv(): these runs deliberately pass GIT_DIR through in the
+    // isolation test, to prove the CLI clears it rather than the caller.
+    env: { ...process.env, ...GIT_IDENTITY, ...env },
   });
 
 const entry = (id: string) =>
