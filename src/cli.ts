@@ -22,7 +22,8 @@ import {
   type GhPr,
   type LinearIssue,
 } from "./candidates.ts";
-import { configPath, resolveDataDir } from "./config.ts";
+import { configPath, resolveDataDir, resolveGithubOwners } from "./config.ts";
+import { ownerSearchGroups } from "./owners.ts";
 import { renderMarkdownReport, renderReport } from "./report.ts";
 import {
   CRON_MARKER,
@@ -48,6 +49,7 @@ const USAGE = `usage:
             [--date YYYY-MM-DD] [--tags a,b] [--links url,url]
   brag candidates [--source github|linear|all] [--since YYYY-MM-DD] [--until YYYY-MM-DD]
                   [--owner <org>]...              # draft entries (JSONL) for curation, new ids only
+                                                  # owners default to github_owners in config.json
   brag append [--data-dir <path>]                 # entries as JSON array or JSONL on stdin
   brag read [--data-dir <path>] [--from YYYY-MM-DD] [--to YYYY-MM-DD]
   brag report --from YYYY-MM-DD --to YYYY-MM-DD [--out <file.html>]
@@ -114,12 +116,36 @@ function parseStdin(): Entry[] {
   return raw.split("\n").map((line) => JSON.parse(line) as Entry);
 }
 
+// Git reads GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE in preference to the
+// working directory, and sets all three when it runs a hook. Inheriting them
+// would send a data-dir commit into whatever repository invoked us — a
+// `brag append` from a pre-commit hook committing into the hooked repo rather
+// than the ledger. `cwd` is the only thing that should decide the repository,
+// so the ambient values are cleared for every git call.
+const GIT_ENV_OVERRIDES = [
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_COMMON_DIR",
+  "GIT_NAMESPACE",
+  "GIT_PREFIX",
+];
+
+function gitEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of GIT_ENV_OVERRIDES) delete env[key];
+  return env;
+}
+
+function git(args: string[], dir: string): void {
+  execFileSync("git", args, { cwd: dir, env: gitEnv(), stdio: "pipe" });
+}
+
 function insideGitRepo(dir: string): boolean {
   try {
-    execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
-      cwd: dir,
-      stdio: "pipe",
-    });
+    git(["rev-parse", "--is-inside-work-tree"], dir);
     return true;
   } catch {
     return false;
@@ -129,18 +155,12 @@ function insideGitRepo(dir: string): boolean {
 function autoCommit(file: string, message: string): void {
   const dir = dirname(file);
   if (!insideGitRepo(dir)) return;
-  execFileSync("git", ["add", file], { cwd: dir, stdio: "pipe" });
+  git(["add", file], dir);
   try {
-    execFileSync("git", ["diff", "--cached", "--quiet"], {
-      cwd: dir,
-      stdio: "pipe",
-    });
+    git(["diff", "--cached", "--quiet"], dir);
     return; // nothing staged
   } catch {
-    execFileSync("git", ["commit", "-q", "-m", message], {
-      cwd: dir,
-      stdio: "pipe",
-    });
+    git(["commit", "-q", "-m", message], dir);
   }
 }
 
@@ -210,9 +230,9 @@ function init(): void {
     writeFileSync(cfg, JSON.stringify({ data_dir: dataDir }, null, 2) + "\n");
   }
   if (values.git && !insideGitRepo(dataDir)) {
-    execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dataDir });
-    execFileSync("git", ["add", "-A"], { cwd: dataDir });
-    execFileSync("git", ["commit", "-q", "-m", "brag: init"], { cwd: dataDir });
+    git(["init", "-q", "-b", "main"], dataDir);
+    git(["add", "-A"], dataDir);
+    git(["commit", "-q", "-m", "brag: init"], dataDir);
   }
   console.log(`brag data dir ready: ${dataDir}`);
   console.log(
@@ -341,52 +361,44 @@ async function candidates(): Promise<void> {
   if (wantGithub) {
     const since = sinceFor("github");
     const login = gh(["api", "user", "--jq", ".login"]).trim();
-    const owners = values.owner ?? [];
-    const ownerArgs = owners.flatMap((o) => ["--owner", o]);
+    const groups = ownerSearchGroups(
+      resolveGithubOwners({ flags: values.owner })
+    );
     for (const chunk of chunkWindows(since, until)) {
       const range = `${chunk.since}..${chunk.until}`;
-      const authored = JSON.parse(
-        gh([
-          "search",
-          "prs",
-          "--author",
-          login,
-          "--merged",
-          "--merged-at",
-          range,
-          "--limit",
-          "200",
-          "--json",
-          GH_JSON,
-          ...ownerArgs,
-        ])
-      ) as GhPr[];
-      drafts.push(
-        ...githubPrsToCandidates(authored, { kind: "pr_merged" }, now)
-      );
-      const reviewed = JSON.parse(
-        gh([
-          "search",
-          "prs",
-          "--reviewed-by",
-          login,
-          "--merged",
-          "--merged-at",
-          range,
-          "--limit",
-          "200",
-          "--json",
-          GH_JSON,
-          ...ownerArgs,
-        ])
-      ) as GhPr[];
-      drafts.push(
-        ...githubPrsToCandidates(
-          reviewed,
-          { kind: "review", excludeAuthor: login },
-          now
-        )
-      );
+      for (const scope of groups) {
+        const search = (who: "--author" | "--reviewed-by"): GhPr[] =>
+          JSON.parse(
+            gh([
+              "search",
+              "prs",
+              who,
+              login,
+              "--merged",
+              "--merged-at",
+              range,
+              "--limit",
+              "200",
+              "--json",
+              GH_JSON,
+              ...scope,
+            ])
+          ) as GhPr[];
+        drafts.push(
+          ...githubPrsToCandidates(
+            search("--author"),
+            { kind: "pr_merged" },
+            now
+          )
+        );
+        drafts.push(
+          ...githubPrsToCandidates(
+            search("--reviewed-by"),
+            { kind: "review", excludeAuthor: login },
+            now
+          )
+        );
+      }
     }
   }
   if (wantLinear) {

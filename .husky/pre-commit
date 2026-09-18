@@ -1,3 +1,10 @@
+# git exports GIT_DIR, GIT_INDEX_FILE and friends to its hooks, and git reads
+# them in preference to a subprocess's working directory. The test suite spawns
+# git-backed ledgers in temp dirs, so leaving these set makes their commits land
+# in *this* repository, on the branch being committed. Clear them first.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY \
+  GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_NAMESPACE GIT_PREFIX
+
 flox activate -- npx lint-staged
 flox activate -- npm run typecheck
 flox activate -- npm run test
