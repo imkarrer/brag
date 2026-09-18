@@ -23,6 +23,21 @@ creates a user-owned data dir, resolved in order: `--data-dir` flag >
 data dir is a git repo, every append and watermark write auto-commits;
 otherwise it's plain files.
 
+That config file also scopes harvesting. `github_owners` lists the owners
+`brag candidates` searches, each optionally narrowed by repository
+visibility (ADR 0009):
+
+```json
+"github_owners": [
+  "flox",
+  { "owner": "imkarrer", "visibility": ["public"] }
+]
+```
+
+A bare string means every visibility. Owners sharing a filter are searched
+together, so the list above costs two searches per window rather than one.
+`--owner` flags override the config outright.
+
 Data dir layout:
 
 ```
